@@ -1,0 +1,4 @@
+Source: faiss
+Version: 2018-01-01-f1e4110684
+Description: A library for efficient similarity search and clustering of dense vectors.
+Build-Depends: openblas
