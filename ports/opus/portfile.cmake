@@ -12,6 +12,7 @@ vcpkg_from_github(
     PATCHES "${CMAKE_CURRENT_LIST_DIR}/no-main.patch"
 )
 
+if(NOT VCPKG_CMAKE_SYSTEM_NAME OR VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 # Ensure proper crt linkage
 file(READ ${SOURCE_PATH}/win32/VS2015/common.props OPUS_PROPS)
 if(VCPKG_CRT_LINKAGE STREQUAL dynamic)
@@ -72,5 +73,107 @@ if(VCPKG_LIBRARY_LINKAGE STREQUAL dynamic)
     file(WRITE ${CURRENT_PACKAGES_DIR}/include/opus/opus_defines.h "${OPUS_DEFINES}")
 endif()
 
+elseif(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR VCPKG_CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  file(REMOVE_RECURSE ${SOURCE_PATH}/build/debug)
+    file(REMOVE_RECURSE ${SOURCE_PATH}/build/release)
+
+    find_program(AUTORECONF autoreconf)
+if(NOT AUTORECONF)
+    message(FATAL_ERROR "\
+    Please set up a development environment \
+    On an Ubuntu or Debian family Linux distribution:\
+    % sudo apt-get install git autoconf automake libtool gcc make\
+    On a Fedora/Redhat based Linux:\
+    % sudo dnf install git autoconf automake libtool gcc make\
+    Or for older Redhat/Centos Linux releases:\
+    % sudo yum install git autoconf automake libtool gcc make\
+    On Apple macOS, install Xcode and brew.sh, then in the Terminal enter:\
+    % brew install autoconf automake libtool\
+    ")
+endif()
+
+##############
+# Updating build configuration
+#############
+    message(STATUS "Updating build configuration files, please wait....")
+    vcpkg_execute_required_process(
+        COMMAND "${AUTORECONF}" -isf
+        WORKING_DIRECTORY ${SOURCE_PATH}
+        LOGNAME updating-build-configuration-${TARGET_TRIPLET}
+    )
+message(STATUS "Updating build configuration files ${TARGET_TRIPLET} done.")
+
+    ################
+    # Debug build
+    ################
+    message(STATUS "Configuring ${TARGET_TRIPLET}-dbg")
+    vcpkg_execute_required_process(
+        COMMAND "${SOURCE_PATH}/configure" --prefix=${SOURCE_PATH}/build/debug 
+        WORKING_DIRECTORY ${SOURCE_PATH}
+        LOGNAME config-${TARGET_TRIPLET}-dbg
+    )
+    message(STATUS "Configuring ${TARGET_TRIPLET}-dbg done.")
+
+    message(STATUS "Installing ${TARGET_TRIPLET}-dbg")
+    vcpkg_execute_required_process(
+        COMMAND make -j install
+        WORKING_DIRECTORY ${SOURCE_PATH}
+        LOGNAME build-${TARGET_TRIPLET}-dbg
+    )
+    message(STATUS "Installing ${TARGET_TRIPLET}-dbg done.")
+
+    ################
+    # Release build
+    ################
+    message(STATUS "Configuring ${TARGET_TRIPLET}-rel")
+    vcpkg_execute_required_process(
+        COMMAND make distclean
+        WORKING_DIRECTORY ${SOURCE_PATH}
+        LOGNAME config-${TARGET_TRIPLET}-dbg
+    )
+    vcpkg_execute_required_process(
+        COMMAND "${SOURCE_PATH}/configure" --prefix=${SOURCE_PATH}/build/release
+        WORKING_DIRECTORY ${SOURCE_PATH}
+        LOGNAME config-${TARGET_TRIPLET}-rel
+    )
+    message(STATUS "Configuring ${TARGET_TRIPLET}-rel done.")
+
+    message(STATUS "Installing ${TARGET_TRIPLET}-rel")
+    vcpkg_execute_required_process(
+        COMMAND make -j install
+        WORKING_DIRECTORY ${SOURCE_PATH}
+        LOGNAME build-${TARGET_TRIPLET}-rel
+    )
+    message(STATUS "Installing ${TARGET_TRIPLET}-rel done.")
+
+  file(INSTALL
+            "${SOURCE_PATH}//build/debug/include/opusopus_defines.h"
+            "${SOURCE_PATH}//build/debug/include/opusopus.h"
+            "${SOURCE_PATH}//build/debug/include/opusopus_multistream.h"
+	    "${SOURCE_PATH}//build/debug/include/opusopus_types.h"
+      DESTINATION
+            ${CURRENT_PACKAGES_DIR}/include
+)
+
+    file(
+        INSTALL
+            "${SOURCE_PATH}/build/debug/lib/libopus.a"
+        DESTINATION
+            ${CURRENT_INSTALLED_DIR}/debug/lib
+)
+
+
+
+    file(
+
+        INSTALL
+            "${SOURCE_PATH}/build/release/lib/libopus.a"
+        DESTINATION
+            ${CURRENT_PACKAGES_DIR}/lib
+
+    )
+endif()
+
 # Handle copyright
 file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/opus RENAME copyright)
+
