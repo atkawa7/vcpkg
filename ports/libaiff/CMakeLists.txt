@@ -6,8 +6,10 @@ set(SRC
   extended.c pascal.c
 )
 
+add_definitions(-DHAVE_INTTYPES_H -DHAVE_STDINT_H  -DHAVE_STRING_H -DHAVE_STDLIB_H)
+
 if(MSVC)
-  add_compile_options(/W4 -D_CRT_SECURE_NO_WARNINGS -DHAVE_INTTYPES_H -DHAVE_STDINT_H  -DHAVE_STRING_H -DHAVE_STDLIB_H)
+  add_compile_options(/W4 -D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 if(BUILD_SHARED_LIBS)
