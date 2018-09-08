@@ -147,12 +147,12 @@ message(STATUS "Updating build configuration files ${TARGET_TRIPLET} done.")
     message(STATUS "Installing ${TARGET_TRIPLET}-rel done.")
 
   file(INSTALL
-            "${SOURCE_PATH}//build/debug/include/opusopus_defines.h"
-            "${SOURCE_PATH}//build/debug/include/opusopus.h"
-            "${SOURCE_PATH}//build/debug/include/opusopus_multistream.h"
-	    "${SOURCE_PATH}//build/debug/include/opusopus_types.h"
+            "${SOURCE_PATH}//build/debug/include/opus/opus_defines.h"
+            "${SOURCE_PATH}//build/debug/include/opus/opus.h"
+            "${SOURCE_PATH}//build/debug/include/opus/opus_multistream.h"
+	    "${SOURCE_PATH}//build/debug/include/opus/opus_types.h"
       DESTINATION
-            ${CURRENT_PACKAGES_DIR}/include
+            ${CURRENT_PACKAGES_DIR}/include/opus
 )
 
     file(
