@@ -9,6 +9,7 @@ vcpkg_from_github(
   REF c38887c5c5e64a4b31108733bd79ca9b2496d987
   SHA512  8da18df25807e76f9187f7bf30585aace303d55444f0a614ab00d98d11caca3fdc5c6f5b9fd11e5f4c92a2ab1e86fef73deeeada57e9d49951fea8b80ba383cc
   HEAD_REF master
+  PATCHES ${CMAKE_CURRENT_LIST_DIR}/skip_mp4_element_ids.patch
 )
 
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt DESTINATION ${SOURCE_PATH})
