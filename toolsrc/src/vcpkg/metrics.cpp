@@ -303,149 +303,149 @@ namespace vcpkg::Metrics
 
     void Metrics::upload(const std::string& payload)
     {
-#if defined(_WIN32)
-        HINTERNET connect = nullptr, request = nullptr;
-        BOOL results = FALSE;
+// #if defined(_WIN32)
+//         HINTERNET connect = nullptr, request = nullptr;
+//         BOOL results = FALSE;
 
-        const HINTERNET session = WinHttpOpen(
-            L"vcpkg/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-        if (session) connect = WinHttpConnect(session, L"dc.services.visualstudio.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
+//         const HINTERNET session = WinHttpOpen(
+//             L"vcpkg/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+//         if (session) connect = WinHttpConnect(session, L"dc.services.visualstudio.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
 
-        if (connect)
-            request = WinHttpOpenRequest(connect,
-                                         L"POST",
-                                         L"/v2/track",
-                                         nullptr,
-                                         WINHTTP_NO_REFERER,
-                                         WINHTTP_DEFAULT_ACCEPT_TYPES,
-                                         WINHTTP_FLAG_SECURE);
+//         if (connect)
+//             request = WinHttpOpenRequest(connect,
+//                                          L"POST",
+//                                          L"/v2/track",
+//                                          nullptr,
+//                                          WINHTTP_NO_REFERER,
+//                                          WINHTTP_DEFAULT_ACCEPT_TYPES,
+//                                          WINHTTP_FLAG_SECURE);
 
-        if (request)
-        {
-            if (MAXDWORD <= payload.size()) abort();
-            std::wstring hdrs = L"Content-Type: application/json\r\n";
-            std::string& p = const_cast<std::string&>(payload);
-            results = WinHttpSendRequest(request,
-                                         hdrs.c_str(),
-                                         static_cast<DWORD>(hdrs.size()),
-                                         static_cast<void*>(&p[0]),
-                                         static_cast<DWORD>(payload.size()),
-                                         static_cast<DWORD>(payload.size()),
-                                         0);
-        }
+//         if (request)
+//         {
+//             if (MAXDWORD <= payload.size()) abort();
+//             std::wstring hdrs = L"Content-Type: application/json\r\n";
+//             std::string& p = const_cast<std::string&>(payload);
+//             results = WinHttpSendRequest(request,
+//                                          hdrs.c_str(),
+//                                          static_cast<DWORD>(hdrs.size()),
+//                                          static_cast<void*>(&p[0]),
+//                                          static_cast<DWORD>(payload.size()),
+//                                          static_cast<DWORD>(payload.size()),
+//                                          0);
+//         }
 
-        if (results)
-        {
-            results = WinHttpReceiveResponse(request, nullptr);
-        }
+//         if (results)
+//         {
+//             results = WinHttpReceiveResponse(request, nullptr);
+//         }
 
-        DWORD http_code = 0, junk = sizeof(DWORD);
+//         DWORD http_code = 0, junk = sizeof(DWORD);
 
-        if (results)
-        {
-            results = WinHttpQueryHeaders(request,
-                                          WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-                                          nullptr,
-                                          &http_code,
-                                          &junk,
-                                          WINHTTP_NO_HEADER_INDEX);
-        }
+//         if (results)
+//         {
+//             results = WinHttpQueryHeaders(request,
+//                                           WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+//                                           nullptr,
+//                                           &http_code,
+//                                           &junk,
+//                                           WINHTTP_NO_HEADER_INDEX);
+//         }
 
-        std::vector<char> response_buffer;
-        if (results)
-        {
-            DWORD available_data = 0, read_data = 0, total_data = 0;
-            while ((results = WinHttpQueryDataAvailable(request, &available_data)) == TRUE && available_data > 0)
-            {
-                response_buffer.resize(response_buffer.size() + available_data);
+//         std::vector<char> response_buffer;
+//         if (results)
+//         {
+//             DWORD available_data = 0, read_data = 0, total_data = 0;
+//             while ((results = WinHttpQueryDataAvailable(request, &available_data)) == TRUE && available_data > 0)
+//             {
+//                 response_buffer.resize(response_buffer.size() + available_data);
 
-                results = WinHttpReadData(request, &response_buffer.data()[total_data], available_data, &read_data);
+//                 results = WinHttpReadData(request, &response_buffer.data()[total_data], available_data, &read_data);
 
-                if (!results)
-                {
-                    break;
-                }
+//                 if (!results)
+//                 {
+//                     break;
+//                 }
 
-                total_data += read_data;
+//                 total_data += read_data;
 
-                response_buffer.resize(total_data);
-            }
-        }
+//                 response_buffer.resize(total_data);
+//             }
+//         }
 
-        if (!results)
-        {
-#ifndef NDEBUG
-            __debugbreak();
-            auto err = GetLastError();
-            std::cerr << "[DEBUG] failed to connect to server: " << err << "\n";
-#endif
-        }
+//         if (!results)
+//         {
+// #ifndef NDEBUG
+//             __debugbreak();
+//             auto err = GetLastError();
+//             std::cerr << "[DEBUG] failed to connect to server: " << err << "\n";
+// #endif
+//         }
 
-        if (request) WinHttpCloseHandle(request);
-        if (connect) WinHttpCloseHandle(connect);
-        if (session) WinHttpCloseHandle(session);
-#endif
+//         if (request) WinHttpCloseHandle(request);
+//         if (connect) WinHttpCloseHandle(connect);
+//         if (session) WinHttpCloseHandle(session);
+// #endif
     }
 
     void Metrics::flush()
     {
-        const std::string payload = g_metricmessage.format_event_data_template();
-        if (g_should_print_metrics) std::cerr << payload << "\n";
-        if (!g_should_send_metrics) return;
+//         const std::string payload = g_metricmessage.format_event_data_template();
+//         if (g_should_print_metrics) std::cerr << payload << "\n";
+//         if (!g_should_send_metrics) return;
 
-#if defined(_WIN32)
-        wchar_t temp_folder[MAX_PATH];
-        GetTempPathW(MAX_PATH, temp_folder);
+// #if defined(_WIN32)
+//         wchar_t temp_folder[MAX_PATH];
+//         GetTempPathW(MAX_PATH, temp_folder);
 
-        const fs::path temp_folder_path = fs::path(temp_folder) / "vcpkg";
-        const fs::path temp_folder_path_exe =
-            temp_folder_path / Strings::format("vcpkgmetricsuploader-%s.exe", Commands::Version::base_version());
-#endif
+//         const fs::path temp_folder_path = fs::path(temp_folder) / "vcpkg";
+//         const fs::path temp_folder_path_exe =
+//             temp_folder_path / Strings::format("vcpkgmetricsuploader-%s.exe", Commands::Version::base_version());
+// #endif
 
-        auto& fs = Files::get_real_filesystem();
+//         auto& fs = Files::get_real_filesystem();
 
-#if defined(_WIN32)
+// #if defined(_WIN32)
 
-        const fs::path exe_path = [&fs]() -> fs::path {
-            auto vcpkgdir = System::get_exe_path_of_current_process().parent_path();
-            auto path = vcpkgdir / "vcpkgmetricsuploader.exe";
-            if (fs.exists(path)) return path;
+//         const fs::path exe_path = [&fs]() -> fs::path {
+//             auto vcpkgdir = System::get_exe_path_of_current_process().parent_path();
+//             auto path = vcpkgdir / "vcpkgmetricsuploader.exe";
+//             if (fs.exists(path)) return path;
 
-            path = vcpkgdir / "scripts" / "vcpkgmetricsuploader.exe";
-            if (fs.exists(path)) return path;
+//             path = vcpkgdir / "scripts" / "vcpkgmetricsuploader.exe";
+//             if (fs.exists(path)) return path;
 
-            return "";
-        }();
+//             return "";
+//         }();
 
-        std::error_code ec;
-        fs.create_directories(temp_folder_path, ec);
-        if (ec) return;
-        fs.copy_file(exe_path, temp_folder_path_exe, fs::copy_options::skip_existing, ec);
-        if (ec) return;
-#else
-        if (!fs.exists("/tmp")) return;
-        const fs::path temp_folder_path = "/tmp/vcpkg";
-        std::error_code ec;
-        fs.create_directory(temp_folder_path, ec);
-        // ignore error
-        ec.clear();
-#endif
-        const fs::path vcpkg_metrics_txt_path = temp_folder_path / ("vcpkg" + generate_random_UUID() + ".txt");
-        fs.write_contents(vcpkg_metrics_txt_path, payload, ec);
-        if (ec) return;
+//         std::error_code ec;
+//         fs.create_directories(temp_folder_path, ec);
+//         if (ec) return;
+//         fs.copy_file(exe_path, temp_folder_path_exe, fs::copy_options::skip_existing, ec);
+//         if (ec) return;
+// #else
+//         if (!fs.exists("/tmp")) return;
+//         const fs::path temp_folder_path = "/tmp/vcpkg";
+//         std::error_code ec;
+//         fs.create_directory(temp_folder_path, ec);
+//         // ignore error
+//         ec.clear();
+// #endif
+//         const fs::path vcpkg_metrics_txt_path = temp_folder_path / ("vcpkg" + generate_random_UUID() + ".txt");
+//         fs.write_contents(vcpkg_metrics_txt_path, payload, ec);
+//         if (ec) return;
 
-#if defined(_WIN32)
-        const std::string cmd_line = Strings::format("start \"vcpkgmetricsuploader.exe\" \"%s\" \"%s\"",
-                                                     temp_folder_path_exe.u8string(),
-                                                     vcpkg_metrics_txt_path.u8string());
-        System::cmd_execute_no_wait(cmd_line);
-#else
-        auto escaped_path = Strings::escape_string(vcpkg_metrics_txt_path.u8string(), '\'', '\\');
-        const std::string cmd_line = Strings::format(
-            R"((curl "https://dc.services.visualstudio.com/v2/track" -H "Content-Type: application/json" -X POST --data '@%s' >/dev/null 2>&1; rm '%s') &)",
-            escaped_path,
-            escaped_path);
-        System::cmd_execute_clean(cmd_line);
-#endif
+// #if defined(_WIN32)
+//         const std::string cmd_line = Strings::format("start \"vcpkgmetricsuploader.exe\" \"%s\" \"%s\"",
+//                                                      temp_folder_path_exe.u8string(),
+//                                                      vcpkg_metrics_txt_path.u8string());
+//         System::cmd_execute_no_wait(cmd_line);
+// #else
+//         auto escaped_path = Strings::escape_string(vcpkg_metrics_txt_path.u8string(), '\'', '\\');
+//         const std::string cmd_line = Strings::format(
+//             R"((curl "https://dc.services.visualstudio.com/v2/track" -H "Content-Type: application/json" -X POST --data '@%s' >/dev/null 2>&1; rm '%s') &)",
+//             escaped_path,
+//             escaped_path);
+//         System::cmd_execute_clean(cmd_line);
+// #endif
     }
 }

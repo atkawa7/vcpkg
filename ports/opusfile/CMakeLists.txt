@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.4)
 project(opusfile C)
 
+if(WIN32)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4267 /wd4244 /wd4090")
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
 find_path(OGG_INCLUDE_DIR ogg/ogg.h)
 find_library(OGG_LIBRARY ogg)

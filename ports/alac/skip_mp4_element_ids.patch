@@ -1,0 +1,20 @@
+diff --git a/codec/ALACBitUtilities.h b/codec/ALACBitUtilities.h
+index 97e9ebe..bd15bb6 100644
+--- a/codec/ALACBitUtilities.h
++++ b/codec/ALACBitUtilities.h
+@@ -53,6 +53,7 @@ enum
+     ALAC_noErr = 0
+ };
+     
++#ifndef SKIP_MP4_ELEMENT_IDS
+ 
+ typedef enum
+ {
+@@ -67,6 +68,7 @@ typedef enum
+     ID_END = 7
+ } ELEMENT_TYPE;
+ 
++#endif
+ // types
+ typedef struct BitBuffer
+ {
