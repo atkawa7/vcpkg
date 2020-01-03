@@ -1,5 +1,2 @@
-include(vcpkg_common_functions)
-
-include(${CURRENT_INSTALLED_DIR}/share/qt5modularscripts/qt_modular_library.cmake)
-
-qt_modular_library(qtnetworkauth f723e8af1ab511f090d1830bf42899ec51b4a027a91c58c46179c16c9e635a3c3f51c13faf943936074ad768407824e57161e28d872868daaed6254c15fc852d)
+include(${CURRENT_INSTALLED_DIR}/share/qt5/qt_port_functions.cmake)
+qt_submodule_installation()

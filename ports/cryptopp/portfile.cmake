@@ -5,25 +5,32 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
   OUT_SOURCE_PATH CMAKE_SOURCE_PATH
   REPO noloader/cryptopp-cmake
-  REF 2729870f277bd568a8e8183b5ba7799e0c2dbf96
-  SHA512 fff9468774f66a895ab44ce76d37b320aeaa9398514b66d5116ffe84705ef7a202586622d598ea03f7c1636587893d46c6eee5e0da965c58fb74131c4b76223c
+  REF 6d0666c457fbbf6f81819fd2b80f0cb5b6646593
+  SHA512 0341f14ce734afaee8bcc1db1716684f241499c692a5478c83a3df3fd2e5331cd04b2f4f51d43cce231ca1d9fbe76220639573c05ef06be0cf33081a1ef7ab30
   HEAD_REF master
   PATCHES
     cmake.patch
-    simon-speck.patch
 )
 
 vcpkg_from_github(
   OUT_SOURCE_PATH SOURCE_PATH
   REPO weidai11/cryptopp
-  REF CRYPTOPP_7_0_0
-  SHA512 bc83f6adf0ae627c57ff9172d8cee69e7000d9b414ec903a50f11f9a68da08d1dd4985ddaffada86bf58e8168a2df065185efd932201d2df9db3f73025825e54
+  REF CRYPTOPP_8_2_0
+  SHA512 d2dcc107091d00800de243abdce8286ccd7fcc5707eebf88b97675456a021e62002e942b862db0465f72142951f631c0c1f0b2ba56028b96461780a17f2dfdf9
   HEAD_REF master
   PATCHES patch.patch
 )
 
 file(COPY ${CMAKE_SOURCE_PATH}/cryptopp-config.cmake DESTINATION ${SOURCE_PATH})
 file(COPY ${CMAKE_SOURCE_PATH}/CMakeLists.txt DESTINATION ${SOURCE_PATH})
+
+# disable assembly on OSX to fix broken build
+if (VCPKG_CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CRYPTOPP_DISABLE_ASM "ON")
+else()
+    set(CRYPTOPP_DISABLE_ASM "OFF")
+endif()
+
 
 # Dynamic linking should be avoided for Crypto++ to reduce the attack surface,
 # so generate a static lib for both dynamic and static vcpkg targets.
@@ -39,6 +46,7 @@ vcpkg_configure_cmake(
         -DBUILD_STATIC=ON
         -DBUILD_TESTING=OFF
         -DBUILD_DOCUMENTATION=OFF
+        -DDISABLE_ASM=${CRYPTOPP_DISABLE_ASM}
 )
 
 vcpkg_install_cmake()

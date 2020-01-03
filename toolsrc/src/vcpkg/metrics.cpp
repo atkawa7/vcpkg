@@ -7,10 +7,12 @@
 #include <vcpkg/base/files.h>
 #include <vcpkg/base/hash.h>
 #include <vcpkg/base/strings.h>
-#include <vcpkg/base/system.h>
+#include <vcpkg/base/system.process.h>
 
+#if defined(_WIN32)
 #pragma comment(lib, "version")
 #pragma comment(lib, "winhttp")
+#endif
 
 namespace vcpkg::Metrics
 {
@@ -182,7 +184,7 @@ namespace vcpkg::Metrics
             if (buildtime_names.size() > 0)
             {
                 if (props_plus_buildtimes.size() > 0) props_plus_buildtimes.push_back(',');
-                props_plus_buildtimes.append(Strings::format(R"("buildnames": [%s], "buildtimes": [%s])",
+                props_plus_buildtimes.append(Strings::format(R"("buildnames_1": [%s], "buildtimes": [%s])",
                                                              Strings::join(",", buildtime_names, to_json_string),
                                                              Strings::join(",", buildtime_times)));
             }
@@ -220,6 +222,8 @@ namespace vcpkg::Metrics
                                    "OSX",
 #elif defined(__linux__)
                                    "Linux",
+#elif defined(__FreeBSD__)
+                                   "FreeBSD",
 #elif defined(__unix__)
                                    "Unix",
 #else
@@ -248,29 +252,29 @@ namespace vcpkg::Metrics
 
     std::string get_MAC_user()
     {
-#if defined(_WIN32)
-        auto getmac = System::cmd_execute_and_capture_output("getmac");
+// #if defined(_WIN32)
+//         auto getmac = System::cmd_execute_and_capture_output("getmac");
 
-        if (getmac.exit_code != 0) return "0";
+//         if (getmac.exit_code != 0) return "0";
 
-        std::regex mac_regex("([a-fA-F0-9]{2}(-[a-fA-F0-9]{2}){5})");
-        std::sregex_iterator next(getmac.output.begin(), getmac.output.end(), mac_regex);
-        std::sregex_iterator last;
+//         std::regex mac_regex("([a-fA-F0-9]{2}(-[a-fA-F0-9]{2}){5})");
+//         std::sregex_iterator next(getmac.output.begin(), getmac.output.end(), mac_regex);
+//         std::sregex_iterator last;
 
-        while (next != last)
-        {
-            const auto match = *next;
-            if (match[0] != "00-00-00-00-00-00")
-            {
-                return vcpkg::Hash::get_string_hash(match[0], "SHA256");
-            }
-            ++next;
-        }
+//         while (next != last)
+//         {
+//             const auto match = *next;
+//             if (match[0] != "00-00-00-00-00-00")
+//             {
+//                 return vcpkg::Hash::get_string_hash(match[0].str(), Hash::Algorithm::Sha256);
+//             }
+//             ++next;
+//         }
 
-        return "0";
-#else
+//         return "0";
+// #else
         return "{}";
-#endif
+// #endif
     }
 
     void Metrics::set_user_information(const std::string& user_id, const std::string& first_use_time)
@@ -303,7 +307,9 @@ namespace vcpkg::Metrics
 
     void Metrics::upload(const std::string& payload)
     {
-// #if defined(_WIN32)
+// #if !defined(_WIN32)
+//         Util::unused(payload);
+// #else
 //         HINTERNET connect = nullptr, request = nullptr;
 //         BOOL results = FALSE;
 
@@ -389,63 +395,63 @@ namespace vcpkg::Metrics
 
     void Metrics::flush()
     {
-//         const std::string payload = g_metricmessage.format_event_data_template();
-//         if (g_should_print_metrics) std::cerr << payload << "\n";
-//         if (!g_should_send_metrics) return;
+        const std::string payload = g_metricmessage.format_event_data_template();
+        if (g_should_print_metrics) std::cerr << payload << "\n";
+        if (!g_should_send_metrics) return;
 
-// #if defined(_WIN32)
-//         wchar_t temp_folder[MAX_PATH];
-//         GetTempPathW(MAX_PATH, temp_folder);
+#if defined(_WIN32)
+        wchar_t temp_folder[MAX_PATH];
+        GetTempPathW(MAX_PATH, temp_folder);
 
-//         const fs::path temp_folder_path = fs::path(temp_folder) / "vcpkg";
-//         const fs::path temp_folder_path_exe =
-//             temp_folder_path / Strings::format("vcpkgmetricsuploader-%s.exe", Commands::Version::base_version());
-// #endif
+        const fs::path temp_folder_path = fs::path(temp_folder) / "vcpkg";
+        const fs::path temp_folder_path_exe =
+            temp_folder_path / Strings::format("vcpkgmetricsuploader-%s.exe", Commands::Version::base_version());
+#endif
 
-//         auto& fs = Files::get_real_filesystem();
+        auto& fs = Files::get_real_filesystem();
 
-// #if defined(_WIN32)
+#if defined(_WIN32)
 
-//         const fs::path exe_path = [&fs]() -> fs::path {
-//             auto vcpkgdir = System::get_exe_path_of_current_process().parent_path();
-//             auto path = vcpkgdir / "vcpkgmetricsuploader.exe";
-//             if (fs.exists(path)) return path;
+        const fs::path exe_path = [&fs]() -> fs::path {
+            auto vcpkgdir = System::get_exe_path_of_current_process().parent_path();
+            auto path = vcpkgdir / "vcpkgmetricsuploader.exe";
+            if (fs.exists(path)) return path;
 
-//             path = vcpkgdir / "scripts" / "vcpkgmetricsuploader.exe";
-//             if (fs.exists(path)) return path;
+            path = vcpkgdir / "scripts" / "vcpkgmetricsuploader.exe";
+            if (fs.exists(path)) return path;
 
-//             return "";
-//         }();
+            return "";
+        }();
 
-//         std::error_code ec;
-//         fs.create_directories(temp_folder_path, ec);
-//         if (ec) return;
-//         fs.copy_file(exe_path, temp_folder_path_exe, fs::copy_options::skip_existing, ec);
-//         if (ec) return;
-// #else
-//         if (!fs.exists("/tmp")) return;
-//         const fs::path temp_folder_path = "/tmp/vcpkg";
-//         std::error_code ec;
-//         fs.create_directory(temp_folder_path, ec);
-//         // ignore error
-//         ec.clear();
-// #endif
-//         const fs::path vcpkg_metrics_txt_path = temp_folder_path / ("vcpkg" + generate_random_UUID() + ".txt");
-//         fs.write_contents(vcpkg_metrics_txt_path, payload, ec);
-//         if (ec) return;
+        std::error_code ec;
+        fs.create_directories(temp_folder_path, ec);
+        if (ec) return;
+        fs.copy_file(exe_path, temp_folder_path_exe, fs::copy_options::skip_existing, ec);
+        if (ec) return;
+#else
+        if (!fs.exists("/tmp")) return;
+        const fs::path temp_folder_path = "/tmp/vcpkg";
+        std::error_code ec;
+        fs.create_directory(temp_folder_path, ec);
+        // ignore error
+        ec.clear();
+#endif
+        const fs::path vcpkg_metrics_txt_path = temp_folder_path / ("vcpkg" + generate_random_UUID() + ".txt");
+        fs.write_contents(vcpkg_metrics_txt_path, payload, ec);
+        if (ec) return;
 
-// #if defined(_WIN32)
-//         const std::string cmd_line = Strings::format("start \"vcpkgmetricsuploader.exe\" \"%s\" \"%s\"",
-//                                                      temp_folder_path_exe.u8string(),
-//                                                      vcpkg_metrics_txt_path.u8string());
-//         System::cmd_execute_no_wait(cmd_line);
-// #else
-//         auto escaped_path = Strings::escape_string(vcpkg_metrics_txt_path.u8string(), '\'', '\\');
-//         const std::string cmd_line = Strings::format(
-//             R"((curl "https://dc.services.visualstudio.com/v2/track" -H "Content-Type: application/json" -X POST --data '@%s' >/dev/null 2>&1; rm '%s') &)",
-//             escaped_path,
-//             escaped_path);
-//         System::cmd_execute_clean(cmd_line);
-// #endif
+#if defined(_WIN32)
+        const std::string cmd_line = Strings::format("start \"vcpkgmetricsuploader.exe\" \"%s\" \"%s\"",
+                                                     temp_folder_path_exe.u8string(),
+                                                     vcpkg_metrics_txt_path.u8string());
+        System::cmd_execute_no_wait(cmd_line);
+#else
+        auto escaped_path = Strings::escape_string(vcpkg_metrics_txt_path.u8string(), '\'', '\\');
+        const std::string cmd_line = Strings::format(
+            R"((curl "https://dc.services.visualstudio.com/v2/track" -H "Content-Type: application/json" -X POST --data '@%s' >/dev/null 2>&1; rm '%s') &)",
+            escaped_path,
+            escaped_path);
+        System::cmd_execute_clean(cmd_line);
+#endif
     }
 }

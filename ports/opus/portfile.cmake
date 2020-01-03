@@ -1,179 +1,28 @@
-if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL WindowsStore)
-    message(FATAL_ERROR "UWP builds not supported")
-endif()
-
 include(vcpkg_common_functions)
+
 vcpkg_from_github(
-    OUT_SOURCE_PATH SOURCE_PATH
-    REPO xiph/opus
-    REF v1.3
-    SHA512 5ac067514b6471432fcd027b912dcaa765e2bdc986ea289a2aeb57660d18fa1460a0a697b9736d8e2b65eb7b72ad4fa36b9b213389fe1e64335db8e9ad51b750
-    HEAD_REF master
-    PATCHES "${CMAKE_CURRENT_LIST_DIR}/no-main.patch"
-)
+  OUT_SOURCE_PATH
+  SOURCE_PATH
+  REPO
+  xiph/opus
+  REF
+  e85ed7726db5d677c9c0677298ea0cb9c65bdd23
+  SHA512
+  a8c7e5bf383c06f1fdffd44d9b5f658f31eb4800cb59d12da95ddaeb5646f7a7b03025f4663362b888b1374d4cc69154f006ba07b5840ec61ddc1a1af01d6c54
+  HEAD_REF
+  master)
 
-if(NOT VCPKG_CMAKE_SYSTEM_NAME OR VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-# Ensure proper crt linkage
-file(READ ${SOURCE_PATH}/win32/VS2015/common.props OPUS_PROPS)
-if(VCPKG_CRT_LINKAGE STREQUAL dynamic)
-    string(REPLACE ">MultiThreaded<" ">MultiThreadedDLL<" OPUS_PROPS "${OPUS_PROPS}")
-    string(REPLACE ">MultiThreadedDebug<" ">MultiThreadedDebugDLL<" OPUS_PROPS "${OPUS_PROPS}")
-else()
-    string(REPLACE ">MultiThreadedDLL<" ">MultiThreaded<" OPUS_PROPS "${OPUS_PROPS}")
-    string(REPLACE ">MultiThreadedDebugDLL<" ">MultiThreadedDebug<" OPUS_PROPS "${OPUS_PROPS}")
-endif()
-file(WRITE ${SOURCE_PATH}/win32/VS2015/common.props "${OPUS_PROPS}")
-
-if(VCPKG_LIBRARY_LINKAGE STREQUAL static)
-    set(RELEASE_CONFIGURATION "Release")
-    set(DEBUG_CONFIGURATION "Debug")
-else()
-    set(RELEASE_CONFIGURATION "ReleaseDll")
-    set(DEBUG_CONFIGURATION "DebugDll")
-endif()
-
-if(TARGET_TRIPLET MATCHES "x86")
-    set(ARCH_DIR "Win32")
-elseif(TARGET_TRIPLET MATCHES "x64")
-    set(ARCH_DIR "x64")
-else()
-    message(FATAL_ERROR "Architecture not supported")
-endif()
-
-vcpkg_build_msbuild(
-    PROJECT_PATH ${SOURCE_PATH}/win32/VS2015/opus.vcxproj
-    RELEASE_CONFIGURATION ${RELEASE_CONFIGURATION}
-    DEBUG_CONFIGURATION ${DEBUG_CONFIGURATION}
-)
-
-if(VCPKG_LIBRARY_LINKAGE STREQUAL static)
-    # Install release build
-    file(INSTALL ${SOURCE_PATH}/win32/VS2015/${ARCH_DIR}/${RELEASE_CONFIGURATION}/opus.lib DESTINATION ${CURRENT_PACKAGES_DIR}/lib/)
-
-    # Install debug build
-    file(INSTALL ${SOURCE_PATH}/win32/VS2015/${ARCH_DIR}/${DEBUG_CONFIGURATION}/opus.lib DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib/)
-else()
-    # Install release build
-    file(INSTALL ${SOURCE_PATH}/win32/VS2015/${ARCH_DIR}/${RELEASE_CONFIGURATION}/opus.lib DESTINATION ${CURRENT_PACKAGES_DIR}/lib/)
-    file(INSTALL ${SOURCE_PATH}/win32/VS2015/${ARCH_DIR}/${RELEASE_CONFIGURATION}/opus.dll DESTINATION ${CURRENT_PACKAGES_DIR}/bin/)
-
-    # Install debug build
-    file(INSTALL ${SOURCE_PATH}/win32/VS2015/${ARCH_DIR}/${DEBUG_CONFIGURATION}/opus.lib DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib/)
-    file(INSTALL ${SOURCE_PATH}/win32/VS2015/${ARCH_DIR}/${DEBUG_CONFIGURATION}/opus.dll DESTINATION ${CURRENT_PACKAGES_DIR}/debug/bin/)
-endif()
-
+vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH} PREFER_NINJA)
+vcpkg_install_cmake()
+vcpkg_fixup_cmake_targets(CONFIG_PATH lib/cmake/Opus)
 vcpkg_copy_pdbs()
 
-# Install headers
-file(INSTALL ${SOURCE_PATH}/include DESTINATION ${CURRENT_PACKAGES_DIR}/include RENAME opus)
+file(INSTALL
+     ${SOURCE_PATH}/COPYING
+     DESTINATION
+     ${CURRENT_PACKAGES_DIR}/share/opus
+     RENAME copyright)
 
-if(VCPKG_LIBRARY_LINKAGE STREQUAL dynamic)
-    file(READ ${CURRENT_PACKAGES_DIR}/include/opus/opus_defines.h OPUS_DEFINES)
-    string(REPLACE "define OPUS_EXPORT" "define OPUS_EXPORT __declspec(dllimport)" OPUS_DEFINES "${OPUS_DEFINES}")
-    file(WRITE ${CURRENT_PACKAGES_DIR}/include/opus/opus_defines.h "${OPUS_DEFINES}")
-endif()
-
-elseif(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR VCPKG_CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  file(REMOVE_RECURSE ${SOURCE_PATH}/build/debug)
-    file(REMOVE_RECURSE ${SOURCE_PATH}/build/release)
-
-    find_program(AUTORECONF autoreconf)
-if(NOT AUTORECONF)
-    message(FATAL_ERROR "\
-    Please set up a development environment \
-    On an Ubuntu or Debian family Linux distribution:\
-    % sudo apt-get install git autoconf automake libtool gcc make\
-    On a Fedora/Redhat based Linux:\
-    % sudo dnf install git autoconf automake libtool gcc make\
-    Or for older Redhat/Centos Linux releases:\
-    % sudo yum install git autoconf automake libtool gcc make\
-    On Apple macOS, install Xcode and brew.sh, then in the Terminal enter:\
-    % brew install autoconf automake libtool\
-    ")
-endif()
-
-##############
-# Updating build configuration
-#############
-    message(STATUS "Updating build configuration files, please wait....")
-    vcpkg_execute_required_process(
-        COMMAND "${AUTORECONF}" -isf
-        WORKING_DIRECTORY ${SOURCE_PATH}
-        LOGNAME updating-build-configuration-${TARGET_TRIPLET}
-    )
-message(STATUS "Updating build configuration files ${TARGET_TRIPLET} done.")
-
-    ################
-    # Debug build
-    ################
-    message(STATUS "Configuring ${TARGET_TRIPLET}-dbg")
-    vcpkg_execute_required_process(
-        COMMAND "${SOURCE_PATH}/configure" --prefix=${SOURCE_PATH}/build/debug 
-        WORKING_DIRECTORY ${SOURCE_PATH}
-        LOGNAME config-${TARGET_TRIPLET}-dbg
-    )
-    message(STATUS "Configuring ${TARGET_TRIPLET}-dbg done.")
-
-    message(STATUS "Installing ${TARGET_TRIPLET}-dbg")
-    vcpkg_execute_required_process(
-        COMMAND make -j install
-        WORKING_DIRECTORY ${SOURCE_PATH}
-        LOGNAME build-${TARGET_TRIPLET}-dbg
-    )
-    message(STATUS "Installing ${TARGET_TRIPLET}-dbg done.")
-
-    ################
-    # Release build
-    ################
-    message(STATUS "Configuring ${TARGET_TRIPLET}-rel")
-    vcpkg_execute_required_process(
-        COMMAND make distclean
-        WORKING_DIRECTORY ${SOURCE_PATH}
-        LOGNAME config-${TARGET_TRIPLET}-dbg
-    )
-    vcpkg_execute_required_process(
-        COMMAND "${SOURCE_PATH}/configure" --prefix=${SOURCE_PATH}/build/release
-        WORKING_DIRECTORY ${SOURCE_PATH}
-        LOGNAME config-${TARGET_TRIPLET}-rel
-    )
-    message(STATUS "Configuring ${TARGET_TRIPLET}-rel done.")
-
-    message(STATUS "Installing ${TARGET_TRIPLET}-rel")
-    vcpkg_execute_required_process(
-        COMMAND make -j install
-        WORKING_DIRECTORY ${SOURCE_PATH}
-        LOGNAME build-${TARGET_TRIPLET}-rel
-    )
-    message(STATUS "Installing ${TARGET_TRIPLET}-rel done.")
-
-  file(INSTALL
-            "${SOURCE_PATH}//build/debug/include/opus/opus_defines.h"
-            "${SOURCE_PATH}//build/debug/include/opus/opus.h"
-            "${SOURCE_PATH}//build/debug/include/opus/opus_multistream.h"
-	    "${SOURCE_PATH}//build/debug/include/opus/opus_types.h"
-      DESTINATION
-            ${CURRENT_PACKAGES_DIR}/include/opus
-)
-
-    file(
-        INSTALL
-            "${SOURCE_PATH}/build/debug/lib/libopus.a"
-        DESTINATION
-            ${CURRENT_INSTALLED_DIR}/debug/lib
-)
-
-
-
-    file(
-
-        INSTALL
-            "${SOURCE_PATH}/build/release/lib/libopus.a"
-        DESTINATION
-            ${CURRENT_PACKAGES_DIR}/lib
-
-    )
-endif()
-
-# Handle copyright
-file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/opus RENAME copyright)
-
+file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/lib/cmake
+                    ${CURRENT_PACKAGES_DIR}/lib/cmake
+                    ${CURRENT_PACKAGES_DIR}/debug/include)

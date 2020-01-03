@@ -7,11 +7,12 @@ endif()
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO google/googletest
-    REF release-1.8.1
-    SHA512 e6283c667558e1fd6e49fa96e52af0e415a3c8037afe1d28b7ff1ec4c2ef8f49beb70a9327b7fc77eb4052a58c4ccad8b5260ec90e4bceeac7a46ff59c4369d7
+    REF cd17fa2abda2a2e4111cdabd62a87aea16835014 #version 1.10.0 commit on 2019.10.09
+    SHA512 0899ebc21821e1978e8831ac89698fc88bf98ec7e22b9dd4f9eea0459396f6834ef35f6ee2afd1b8ca9432722e561c30905f8d87614d012bb711d295ebc1d833
     HEAD_REF master
     PATCHES
-        ${CMAKE_CURRENT_LIST_DIR}/0002-Fix-z7-override.patch
+        0002-Fix-z7-override.patch
+        fix-main-lib-path.patch
 )
 
 string(COMPARE EQUAL "${VCPKG_CRT_LINKAGE}" "dynamic" GTEST_FORCE_SHARED_CRT)
@@ -37,6 +38,7 @@ file(
         "${SOURCE_PATH}/googletest/src/gtest-death-test.cc"
         "${SOURCE_PATH}/googletest/src/gtest-filepath.cc"
         "${SOURCE_PATH}/googletest/src/gtest-internal-inl.h"
+        "${SOURCE_PATH}/googletest/src/gtest-matchers.cc"
         "${SOURCE_PATH}/googletest/src/gtest-port.cc"
         "${SOURCE_PATH}/googletest/src/gtest-printers.cc"
         "${SOURCE_PATH}/googletest/src/gtest-test-part.cc"

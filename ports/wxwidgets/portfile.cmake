@@ -2,11 +2,23 @@ include(vcpkg_common_functions)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO wxWidgets/wxWidgets
-    REF v3.1.1
-    SHA512 f6d8974e2f48bae7e96a8938df3ad5efc403036c1dcbe2b48edd276ee7923802ba3e95e3f3bd9db17985e427b8e4f78950df0cbba83ae99d508ed04633816c95
+    REF v3.1.3
+    SHA512 4ecb5c2d13f9bda7aa3c12e887c351a0004509ec24bdd440542bec67e1b6dca20e7838a01236a71dd3cf2e1ba0653c40878047f406464cb2c9ee07c26d6f2599
     HEAD_REF master
     PATCHES disable-platform-lib-dir.patch
 )
+
+set(OPTIONS)
+if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(OPTIONS -DCOTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES=9999)
+endif()
+
+if(VCPKG_TARGET_ARCHITECTURE STREQUAL arm64 OR VCPKG_TARGET_ARCHITECTURE STREQUAL arm)
+    set(OPTIONS
+        -DwxUSE_OPENGL=OFF
+        -DwxUSE_STACKWALKER=OFF
+    )
+endif()
 
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
@@ -20,9 +32,12 @@ vcpkg_configure_cmake(
         -DwxUSE_LIBTIFF=sys
         -DwxUSE_STL=ON
         -DwxBUILD_DISABLE_PLATFORM_LIB_DIR=ON
+        ${OPTIONS}
 )
 
 vcpkg_install_cmake()
+
+file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/bin ${CURRENT_PACKAGES_DIR}/debug/bin)
 
 file(GLOB DLLS "${CURRENT_PACKAGES_DIR}/lib/*.dll")
 if(DLLS)

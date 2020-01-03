@@ -190,7 +190,15 @@ endif()
 
 add_library(cairo ${SOURCES})
 
-target_link_libraries(cairo PRIVATE gdi32 msimg32 user32 ZLIB::ZLIB PNG::PNG Freetype::Freetype unofficial::pixman::pixman-1 unofficial::fontconfig::fontconfig)
+if (WITH_X11)
+    target_compile_definitions(cairo PUBLIC -DCAIRO_HAS_XLIB_SURFACE=1)
+endif()
+
+target_link_libraries(cairo PRIVATE ZLIB::ZLIB PNG::PNG Freetype::Freetype unofficial::pixman::pixman-1 unofficial::fontconfig::fontconfig)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_link_libraries(cairo PRIVATE gdi32 msimg32 user32)
+endif()
 
 # GObject support module
 
@@ -218,6 +226,10 @@ if(MSVC)
     target_compile_options(cairo-gobject PRIVATE
         "/wd4244" "/wd4146" "/wd4312" "/wd4267" "/wd4996" "/wd4311" "/wd4334" "/wd4101"
     )
+endif()
+
+if (CAIRO_HAS_XLIB_SURFACE)
+    file(INSTALL cairo-xlib.h DESTINATION include)
 endif()
 
 install(TARGETS cairo cairo-gobject

@@ -5,14 +5,14 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO Dav1dde/glad
-    REF v0.1.28
-    SHA512 5895e25bffab4ead346f65011cbb52a434779fed1dad619ffde27f68b52994cd0b048a45b4533b22b54971dfdba935d93fcf6bee5789061d0057af869b95998c
+    REF 1a42f8a6099c60f6a4522731fadad4191d64e6ff
+    SHA512 02870cf43b5ee33a733122885f748a1368e4487fc08f32ba376d6d53c0efd9ed6e9aea350b723d955869ed47b4d9d69235a52f01723215cf4393d6ca99e2ac00
     HEAD_REF master
 )
 
-vcpkg_find_acquire_program(PYTHON2)
-get_filename_component(PYTHON2_DIR "${PYTHON2}" DIRECTORY)
-vcpkg_add_to_path("${PYTHON2_DIR}")
+vcpkg_find_acquire_program(PYTHON3)
+get_filename_component(PYTHON3_DIR "${PYTHON3}" DIRECTORY)
+vcpkg_add_to_path("${PYTHON3_DIR}")
 
 file(COPY
     ${CURRENT_INSTALLED_DIR}/include/KHR/khrplatform.h

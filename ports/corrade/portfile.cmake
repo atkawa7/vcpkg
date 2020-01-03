@@ -2,8 +2,8 @@ include(vcpkg_common_functions)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO mosra/corrade
-    REF v2018.10
-    SHA512 594c15d9622fa0abdf893c15054f27bdcc40b5de1543d722b7173138ec5d299c45b7a85376ed617cdf9b4f52a05bf7a3d1ea1983e112b62690211116c255d201
+    REF v2019.10
+    SHA512 5d161f78844b06e1a9979c7e244968a691012e7212e05df3ee3572f5df9aa69e86309f426a89f356f483f6de3871366a8e11b1701a578f865ea738cc8eee515b
     HEAD_REF master
 )
 
@@ -25,11 +25,23 @@ foreach(_feature IN LISTS ALL_FEATURES)
     endif()
 endforeach()
 
+if(NOT VCPKG_CMAKE_SYSTEM_NAME)
+  # building for Windows desktop
+  if (VCPKG_PLATFORM_TOOLSET STREQUAL "v142" AND NOT VCPKG_USE_HEAD_VERSION)
+    message("**********")
+    message("WARNING: Visual Studio 2019 is not official supported by Corrade/Magnum team. Please use --head version if you intend to have upstream support.")
+    message("**********")
+    set(_CUSTOM_BUILD_FLAGS "-DCORRADE_MSVC2017_COMPATIBILITY=ON")
+  endif()
+endif()
+
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
     PREFER_NINJA # Disable this option if project cannot be built with Ninja
     OPTIONS
+        -DUTILITY_USE_ANSI_COLORS=ON
         -DBUILD_STATIC=${BUILD_STATIC}
+        ${_CUSTOM_BUILD_FLAGS}
         ${_COMPONENT_FLAGS}
 )
 
