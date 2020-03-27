@@ -45,6 +45,7 @@ vcpkg_configure_cmake(
         -DSOURCE_PATH=${MASTER_COPY_SOURCE_PATH}
         -DPERL=${PERL}
         -DMAKE=${MAKE}
+        -DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}
     OPTIONS_RELEASE
         -DINSTALL_HEADERS=ON
 )
