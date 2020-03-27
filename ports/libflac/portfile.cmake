@@ -9,10 +9,26 @@ vcpkg_from_github(
         "${CMAKE_CURRENT_LIST_DIR}/uwp-createfile2.patch"
 )
 
-if(VCPKG_TARGET_ARCHITECTURE STREQUAL x86)
+
+if(VCPKG_TARGET_ARCHITECTURE STREQUAL x86 AND NOT(VCPKG_CMAKE_SYSTEM_NAME STREQUAL Android))
+    if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL Android)
+        if(CMAKE_HOST_SYSTEM_NAME STREQUAL Linux)
+            set(ANDROID_HOST_TAG linux-x86_64)
+        elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL Darwin)
+            set(ANDROID_HOST_TAG darwin-x86_64)
+        elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL Windows)
+            set(ANDROID_HOST_TAG windows-x86_64)
+            set(ANDROID_TOOLCHAIN_SUFFIX .exe)
+        endif()
+        set(ANDROID_HOST_PREBUILTS "$ENV{ANDROID_NDK_HOME}/prebuilt/${ANDROID_HOST_TAG}")
+        set(NASM_EXE_PATH "${ANDROID_HOST_PREBUILTS}/bin/yasm${ANDROID_TOOLCHAIN_SUFFIX}")
+        message("-- Android NASM ${NASM_EXE_PATH}")
+        set(ENV{PATH} "${NASM_EXE_PATH};$ENV{PATH}")
+    else()
     vcpkg_find_acquire_program(NASM)
     get_filename_component(NASM_EXE_PATH ${NASM} DIRECTORY)
     set(ENV{PATH} "$ENV{PATH};${NASM_EXE_PATH}")
+    endif()
 endif()
 
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt DESTINATION ${SOURCE_PATH})

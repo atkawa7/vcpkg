@@ -32,9 +32,16 @@ endif()
 if(LIBFLAC_ARCHITECTURE MATCHES x86)
     add_definitions(-DFLAC__CPU_IA32)
     add_definitions(-DFLAC__HAS_NASM)
+    if(APPLE)
+        set(OBJ_FORMAT macho)
+    elseif(WIN32)
+        set(OBJ_FORMAT win32)
+    else()
+        set(OBJ_FORMAT elf)
+    endif()
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/nasm)
     foreach(ASM_SOURCE cpu_asm fixed_asm lpc_asm)
-        execute_process(COMMAND nasm "-i${PROJECT_SOURCE_DIR}/src/libFLAC/ia32/" -f win32 -d OBJ_FORMAT_win32 -f win32 
+        execute_process(COMMAND nasm "-i${PROJECT_SOURCE_DIR}/src/libFLAC/ia32/" -d "OBJ_FORMAT_${OBJ_FORMAT}" -f ${OBJ_FORMAT} 
             -o "${CMAKE_BINARY_DIR}/nasm/${ASM_SOURCE}.obj" "${PROJECT_SOURCE_DIR}/src/libFLAC/ia32/${ASM_SOURCE}.nasm"
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
         list(APPEND LIBFLAC_SOURCES ${CMAKE_BINARY_DIR}/nasm/${ASM_SOURCE}.obj)
